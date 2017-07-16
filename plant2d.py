@@ -23,7 +23,7 @@ import random
 class Cell:
     parent = None
 
-    def __init__(self, position=[100.0,100.0], mass=1, parent=None, velocity=[0.0,0.0]):
+    def __init__(self, position=[100.0,100.0], mass=1, parent=None, velocity=[0.0,0.0],level=0):
         if parent:
             position = [p + random.gauss(0,1) for p in position]
         self.timeCounter = {
@@ -37,13 +37,14 @@ class Cell:
                 'width': 0, # for both stems and berries
                 'type':'stem',
                 'color':'#FFFFFF',
+                'level':level,
             }
         self.dna = {
                 "space_required_for_reproduction": 20,
                 "time_before_reproduction": 50,
                 "time_before_branching": 500,
                 "chargeMultiplier": 10,
-                "sizeMultiplier": 10,
+                "sizeMultiplier": 1,
                 } #TODO
         self.physics = {
                 "velocity":velocity[:],
@@ -68,7 +69,7 @@ class Cell:
 
     def develop(self):
         # physics
-        friction = 0.95
+        friction = 0.5
         self.physics["position"][0] += self.physics["velocity"][0]
         self.physics["position"][1] += self.physics["velocity"][1]
         self.physics["velocity"] = [v*friction for v in self.physics["velocity"]]
@@ -79,22 +80,30 @@ class Cell:
             math.log10(self.timeCounter["after_birth"] + 1)
 
     def reproduceNumber(self):
-        if not self.parent:
+        if self.bioState["level"] == 0:
             if self.timeCounter["after_birth"] == 0:
                 return 5
-        if self.timeCounter["after_birth"] == self.dna["time_before_branching"]:
-            return 2
-        elif self.timeCounter["after_birth"] == self.dna["time_before_reproduction"]:
-            return 1
+        elif \
+                self.bioState["level"] == 3 or \
+                self.bioState["level"] == 9 or \
+                self.bioState["level"] == 27 or \
+                self.bioState["level"] == 81:
+                # self.bioState["level"] == 32 or \
+                # self.bioState["level"] == 64:
+            if self.timeCounter["after_birth"] == self.dna["time_before_reproduction"]:
+                return 3
         else:
-            return 0
+            if self.timeCounter["after_birth"] == self.dna["time_before_reproduction"]:
+                return 1
+        return 0
 
     def reproduce(self):
         childNumber = self.reproduceNumber()
         return [Cell(
             position=self.physics["position"], 
             velocity=self.physics["velocity"], 
-            parent=self
+            parent=self,
+            level=self.bioState["level"]+1,
             ) for i in range(childNumber)]
 
     def getPosition(self):
@@ -127,15 +136,17 @@ class Scene:
         for i, cell in enumerate(self.cells):
             # physics =========================================================
             distMin = 1.0
-            centerCharge = 5
-            junctureStrength = 0.1
+            centerCharge = 2 
+            junctureStrength = 0.6
+            radiusSizeRatio = 2 # 0.5 → half size
+            collisionStrength = 0.5
             # electric --------------------------------------------------------
             distX = cell.getPosition()[0] - 300
             distY = cell.getPosition()[1] - 300
             distance = math.sqrt(distX**2 + distY**2)
             if abs(distance) < distMin:
                 distance = distMin
-            force = (0.1 * cell.getCharge() * centerCharge) / distance
+            force = (cell.getCharge() * centerCharge) / distance
             forceX = (force * distX) / distance
             forceY = (force * distY) / distance
             cell.applyForce((forceX,forceY))
@@ -154,8 +165,6 @@ class Scene:
                 cell.applyForce((forceX,forceY))
                 cell.parent.applyForce((forceParentX,forceParentY))
             # collisions ------------------------------------------------------
-            radiusSizeRatio = 1 # 0.5 → half size
-            collisionStrength = 0.01
             otherCells = [c for c in self.cells[i+1:]]
             radius = cell.bioState["size"] * radiusSizeRatio
             for j, oCell in enumerate(otherCells):
