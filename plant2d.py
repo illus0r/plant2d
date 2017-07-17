@@ -23,7 +23,7 @@ import random
 class Cell:
     parent = None
 
-    def __init__(self, position=[300,300], mass=1, parent=None, level=0, angle=0):
+    def __init__(self, position=[300,300], mass=1, parent=None, level=0, angle=0, childAngle=20):
         self.children = []
         self.timeCounter = {
                 'after_birth':0,
@@ -38,6 +38,8 @@ class Cell:
                 'color': '#FFFFFF',
                 'level': level,
                 'angle': angle,
+                'deltaAngle': 0,
+                # 'angleVariance': 90,
             }
         self.dna = {
                 "space_required_for_reproduction": 20,
@@ -45,6 +47,7 @@ class Cell:
                 "time_before_branching": 500,
                 "chargeMultiplier": 10,
                 "sizeMultiplier": 30,
+                "childAngle": childAngle,
                 } #TODO
         self.physics = {
                 "mass": mass,
@@ -74,16 +77,15 @@ class Cell:
                 # c.develop()
         # move
         if self.parent:
-            vector = [
-                self.bioState["size"] * math.sin(math.radians(self.bioState["angle"])),
-                self.bioState["size"] * math.cos(math.radians(self.bioState["angle"]))
-                    ]
+            vector = [self.bioState["size"] * f(math.radians(self.bioState["angle"])) for f in [math.sin, math.cos] ]
             self.physics["position"] = [b+v for b, v in zip(self.parent.physics["position"], vector)]
         #bio
         self.bioState["size"] = self.dna["sizeMultiplier"] * \
             math.log10(self.timeCounter["after_birth"]/5 + 1)
         self.physics["charge"] = self.dna["chargeMultiplier"] * \
             math.log10(self.timeCounter["after_birth"] + 1)
+        # self.bioState["deltaAngle"] = self.bioState["angleVariance"] * \
+            # math.log10(self.timeCounter["after_birth"] + 1)
         #reproduce
         self.reproduce()
         # timing
@@ -110,12 +112,13 @@ class Cell:
         return 0
 
     def reproduce(self):
-        childNumber = self.reproduceNumber()
-        self.children.extend([Cell(
-            parent=self,
-            angle=random.randrange(0,100000),
-            level=self.bioState["level"]+1,
-            ) for i in range(childNumber)])
+        if self.bioState["level"] <= 4:
+            childNumber = self.reproduceNumber()
+            self.children.extend([Cell(
+                parent=self,
+                angle=random.randrange(0,100000),
+                level=self.bioState["level"]+1,
+                ) for i in range(childNumber)])
 
     def render(self):
         if self.parent:
