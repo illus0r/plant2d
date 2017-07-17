@@ -15,10 +15,11 @@ A video walk-through of this example is available at:
 https://vimeo.com/168063840
 """
 
-import arcade
+# import arcade
 import math
 import pprint
 import random
+from PIL import Image, ImageDraw
 
 class Cell:
     parent = None
@@ -169,22 +170,27 @@ SCREEN_WIDTH = 600
 SCREEN_HEIGHT = 600
 
 
-def on_draw(delta_time):
-    arcade.start_render()
-    scene.develop()
-    scene.render()
+# def on_draw(delta_time):
+    # arcade.start_render()
+    # scene.develop()
+    # scene.render()
+    # arcade.draw_line(10,10,200,200,            arcade.color.RED,             1)
 
 def main():
+    im = Image.new('RGB', (SCREEN_WIDTH, SCREEN_HEIGHT), (256, 256, 256)) 
+    draw = ImageDraw.Draw(im) 
+    draw.line((100,200, 150, 320), fill=0, width=3)
+    im.show()
 
     # Open up our window
-    arcade.open_window(SCREEN_WIDTH, SCREEN_HEIGHT, "Bouncing Rectangle Example")
-    arcade.set_background_color(arcade.color.WHITE)
+    # arcade.open_window(SCREEN_WIDTH, SCREEN_HEIGHT, "Bouncing Rectangle Example")
+    # arcade.set_background_color(arcade.color.WHITE)
 
     # Tell the computer to call the draw command at the specified interval.
-    arcade.schedule(on_draw, 1/80)
+    # arcade.schedule(on_draw, 2)
 
     # Run the program
-    arcade.run()
+    # arcade.run()
 
 
 if __name__ == "__main__":
