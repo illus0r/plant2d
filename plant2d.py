@@ -10,6 +10,9 @@ from PIL import Image, ImageDraw
 SCREEN_WIDTH = 600
 SCREEN_HEIGHT = 600
 
+# TODO list:
+# 1. Try to import to blender. May be sverchok's interface can replace tkinter
+
 class DNAType:
     def __init__(self, angle=60, sizeMultiplier=1, branchSegments=5, color='green', slots=[]):
         self.angle = angle # -180<=angle<=180
@@ -21,6 +24,7 @@ class DNAType:
 
 class DNA:
     def __init__(self):
+        self.initialBranchNumber = 0
         self.types = [ # indexes refer to self.bioState["type"]
             DNAType(
                 angle = 60, # -180<=angle<=180
@@ -89,17 +93,28 @@ class Controller:
         self.tk = Tk()
         self.dna = DNA()
         self.scene = Scene(self.tk)
-        #
-        # self.angleVar = IntVar()
-        # self.angleVar = StringVar()
+        # initialBranchNumber
+        self.dna.initialBranchNumber = IntVar()
+        self.dna.initialBranchNumber.set(3)
+        self.dna.initialBranchNumber.trace("w", self.update)
+        initialBranchNumberWidget = Scale(self.tk, from_=0, to=100, orient=HORIZONTAL, 
+                variable=self.dna.initialBranchNumber)
+        initialBranchNumberWidget.pack()
+        # Angle
         self.dna.types[0].angle = IntVar()
         self.dna.types[0].angle.set(5)
-        # self.angleVar.set(5)
-        angleWidget = Scale(self.tk, from_=-180, to=180, orient=HORIZONTAL, variable=self.dna.types[0].angle)
-        # angleWidget = Entry(self.tk, textvariable=self.angleVar)
-        angleWidget.pack()
-        # angleWidget.bind("<Button-1>", self.update)
         self.dna.types[0].angle.trace("w", self.update)
+        angleWidget = Scale(self.tk, from_=-180, to=180, orient=HORIZONTAL, 
+                variable=self.dna.types[0].angle)
+        angleWidget.pack()
+        # sizeMultiplier
+        self.dna.types[0].sizeMultiplier = IntVar()
+        self.dna.types[0].sizeMultiplier.set(90)
+        self.dna.types[0].sizeMultiplier.trace("w", self.update)
+        sizeMultiplierWidget = Scale(self.tk, from_=0, to=100, orient=HORIZONTAL, 
+                variable=self.dna.types[0].sizeMultiplier)
+        sizeMultiplierWidget.pack()
+        #
         self.update()
         mainloop()
 
@@ -163,9 +178,9 @@ class Cell:
                 level=1,
                 levelBranch=1,
                 dna=self.dna,
-                angle=a, 
+                angle=a/100, 
                 type_=0 
-            ) for a in range(0,360,270)])
+            ) for a in range(0,35900,int(36000/self.dna.initialBranchNumber.get()))])
 
         elif self.bioState["level"] <= 70:
             if self.bioState["levelBranch"] <= self.dna.types[self.bioState["type"]].branchSegments:
@@ -176,7 +191,7 @@ class Cell:
                         levelBranch=self.bioState["levelBranch"]+1,
                         type_ = self.bioState["type"],
                         dna=self.dna,
-                        size=self.bioState["size"]*self.dna.types[self.bioState["type"]].sizeMultiplier,
+                        size=self.bioState["size"]*self.dna.types[self.bioState["type"]].sizeMultiplier.get()/100,
                     )])
             else:
                 self.children.extend([Cell(
