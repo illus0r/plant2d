@@ -5,10 +5,11 @@
 import math
 import pprint
 import random
+from tkinter import *
 from PIL import Image, ImageDraw
 
-SCREEN_WIDTH = 6000
-SCREEN_HEIGHT = 6000
+SCREEN_WIDTH = 600
+SCREEN_HEIGHT = 600
 
 class Cell:
     parent = None
@@ -126,7 +127,16 @@ class Cell:
         return 1# if self.bioState["levelBranch"] < 100 else 0
 
     def reproduce(self):
-        if self.bioState["level"] <= 70:
+        if self.bioState["level"] == 0:
+            self.children.extend([Cell(
+                size=40, 
+                level=1,
+                levelBranch=1,
+                angle=a, 
+                type_=0 
+            ) for a in range(0,360,30)])
+
+        elif self.bioState["level"] <= 70:
             if self.bioState["levelBranch"] <= self.dna["types"][self.bioState["type"]]["branchSegments"]:
                 self.children.extend([Cell(
                         parent=self,
@@ -149,23 +159,23 @@ class Cell:
                     ) for slot in self.dna["types"][self.bioState["type"]]["slots"]])
 
 
-    def render(self, draw):
+    def render(self, canvas):
         if self.parent:
             beginPoint = self.parent.physics["position"]
             endPoint = self.physics["position"]
-            # draw.ellipse((
+            # canvas.ellipse((
                 # beginPoint[0]-1, beginPoint[1]-1, 
                 # beginPoint[0]+1, beginPoint[1]+1, 
                 # ), 
                 # fill = 'red')
-            draw.line((
+            canvas.create_line(
                 beginPoint[0], beginPoint[1], 
                 endPoint[0], endPoint[1], 
                 # ), fill=self.bioState["color"], 
-                ), fill=self.dna["types"][self.bioState["type"]]["color"],                        
-                width=int(3*math.log(self.bioState["size"]))
+                fill=self.dna["types"][self.bioState["type"]]["color"],                        
+                width=int(0.5*math.log(self.bioState["size"]))
                 )
-        [c.render(draw) for c in self.children]
+        [c.render(canvas) for c in self.children]
 
     # def getPosition(self):
         # return self.physics["position"]
@@ -180,14 +190,17 @@ class Scene:
 
     def __init__(self):
         self.cells.extend(
-                    [Cell(size=400, angle=angle,  position=[SCREEN_WIDTH/2, SCREEN_HEIGHT/2])
-                    for angle in range(0,360,30)]
+                    [Cell(size=40, position=[SCREEN_WIDTH/2, SCREEN_HEIGHT/2])]
                 )
+        # self.cells.extend(
+                    # [Cell(size=40, angle=angle,  position=[SCREEN_WIDTH/2, SCREEN_HEIGHT/2])
+                    # for angle in range(0,360,30)]
+                # )
         # self.cells[0].children.append(Cell(mass=1, level=1, parent=self.cells[0], angle=45))
         # self.cells[0].children[0].children.append(Cell(mass=1, level=1, parent=self.cells[0].children[0], angle=-45))
 
-    def render(self, draw):
-        [c.render(draw) for c in self.cells]
+    def render(self, canvas):
+        [c.render(canvas) for c in self.cells]
 
     def develop(self):
         # for i, cell in enumerate(self.cells):
@@ -209,21 +222,42 @@ scene = Scene()
     # arcade.draw_line(10,10,200,200,            arcade.color.RED,             1)
 
 def main():
+
+    # # Example with update
+    # root = Tk()
+    # myvar = StringVar()
+    # myvar.set('')
+    # mywidget = Entry(root,textvariable=myvar,width=10)
+    # mywidget.pack()
+    # def oddblue(a,b,c):
+        # if len(myvar.get())%2 == 0:
+            # mywidget.config(bg='red')
+        # else:
+            # mywidget.config(bg='blue')
+        # mywidget.update_idletasks()
+    # myvar.trace('u',oddblue)
+    # root.mainloop()
+
+    master = Tk()
+    canvas = Canvas(master, width=SCREEN_WIDTH, height=SCREEN_HEIGHT)
+    canvas.pack()
     scene.develop()
-    im = Image.new('RGB', (SCREEN_WIDTH, SCREEN_HEIGHT), (256, 256, 256)) 
-    draw = ImageDraw.Draw(im) 
-    scene.render(draw)
-    im.show()
+    scene.render(canvas)
+    #test zone
 
-    # Open up our window
-    # arcade.open_window(SCREEN_WIDTH, SCREEN_HEIGHT, "Bouncing Rectangle Example")
-    # arcade.set_background_color(arcade.color.WHITE)
+    w = Scale(master, from_=-180, to=180, orient=HORIZONTAL)
+    w.pack()
+    e1 = Entry(master)
+    e1.pack()
+    def callback(event):
+        print("clicked at", event.x, event.y)
+    canvas.bind("<B1-Motion>", callback)
+    # canvas.bind("<Button-1>", callback)
 
-    # Tell the computer to call the draw command at the specified interval.
-    # arcade.schedule(on_draw, 2)
+    #/test zone
+    mainloop()
 
-    # Run the program
-    # arcade.run()
+
 
 
 if __name__ == "__main__":
