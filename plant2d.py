@@ -11,10 +11,42 @@ from PIL import Image, ImageDraw
 SCREEN_WIDTH = 600
 SCREEN_HEIGHT = 600
 
+class DNA:
+    def __init__(self):
+        self.types = [ # indexes refer to self.bioState["type"]
+            { #type 0
+                "angle": 60, # -180<=angle<=180
+                "sizeMultiplier": 0.95,
+                "branchSegments": 10,
+                "color": 'red',
+                "slots": [
+                    # {
+                        # "type": 0,
+                        # "angle": 10,
+                        # "sizeMultiplier": 0.5,
+                        # },
+                    # {
+                        # "type": 1,
+                        # "angle": -45,
+                        # "sizeMultiplier": 0.5,
+                        # },
+                    ],
+                },
+            { #type 1
+                "angle": 60, # -180<=angle<=180
+                "sizeMultiplier": 1,
+                "branchSegments": 5,
+                "color": 'green',
+                "slots": [
+                    ],
+                },
+            ]
+
 class Cell:
     parent = None
 
-    def __init__(self, position=[300,300], mass=1, parent=None, level=0, levelBranch=0, angle=0, childAngle=20, size=50, type_=0, color='red'):
+    def __init__(self, position=[300,300], mass=1, parent=None, level=0, levelBranch=0, angle=0, size=50, type_=0, color='red', dna=DNA()):
+        self.dna = dna
         self.children = []
         self.timeCounter = {
                 'after_birth': 0,
@@ -33,52 +65,6 @@ class Cell:
                 # 'deltaAngle': 0,
                 # 'angleVariance': 90,
             }
-        self.dna = {
-                "types": [ # indexes refer to self.bioState["type"]
-                    { #0
-                        "angle": 60, # -180<=angle<=180
-                        "sizeMultiplier": 0.95,
-                        "branchSegments": 10,
-                        "color": 'red',
-                        "slots": [
-                            # {
-                                # "type": 0,
-                                # "angle": 10,
-                                # "sizeMultiplier": 0.5,
-                                # },
-                            # {
-                                # "type": 1,
-                                # "angle": -45,
-                                # "sizeMultiplier": 0.5,
-                                # },
-                            ],
-                        },
-                    { #1
-                        "angle": 60, # -180<=angle<=180
-                        "sizeMultiplier": 1,
-                        "branchSegments": 5,
-                        "color": 'green',
-                        "slots": [
-                            # {
-                                # "type": 0,
-                                # "angle": 45,
-                                # "sizeMultiplier": 0.5,
-                                # },
-                            # {
-                                # "type": 1,
-                                # "angle": -45,
-                                # "sizeMultiplier": 0.5,
-                                # },
-                            ],
-                        },
-                    ],
-                "childAngle": childAngle,
-                # "chargeMultiplier": 10,
-                # "sizeMultiplier": 30,
-                # "space_required_for_reproduction": 20,
-                # "time_before_reproduction": 50,
-                # "time_before_branching": 500,
-                }
         self.physics = {
                 "position": position,
                 }
@@ -87,7 +73,7 @@ class Cell:
     # def is(self):
         # if not self.parent:
             # return self.timeCounter["after_birth"] == 0
-        # return self.timeCounter["after_birth"] == self.dna["time_before_reproduction"]
+        # return self.timeCounter["after_birth"] == self.dna.time_before_reproduction
 
     def applyForce(self, force):
         # root doesn't move:
@@ -119,10 +105,10 @@ class Cell:
                 # self.bioState["level"] == 81:
                 # # self.bioState["level"] == 32 or \
                 # # self.bioState["level"] == 64:
-            # if self.timeCounter["after_birth"] == self.dna["time_before_reproduction"]:
+            # if self.timeCounter["after_birth"] == self.dna.time_before_reproduction:
                 # return 3
         # else:
-            # if self.timeCounter["after_birth"] == self.dna["time_before_reproduction"]:
+            # if self.timeCounter["after_birth"] == self.dna.time_before_reproduction:
                 # return 1
         return 1# if self.bioState["levelBranch"] < 100 else 0
 
@@ -137,15 +123,15 @@ class Cell:
             ) for a in range(0,360,30)])
 
         elif self.bioState["level"] <= 70:
-            if self.bioState["levelBranch"] <= self.dna["types"][self.bioState["type"]]["branchSegments"]:
+            if self.bioState["levelBranch"] <= self.dna.types[self.bioState["type"]]["branchSegments"]:
                 self.children.extend([Cell(
                         parent=self,
-                        angle=self.bioState["angle"] + self.dna["types"][self.bioState["type"]]["angle"],
+                        angle=self.bioState["angle"] + self.dna.types[self.bioState["type"]]["angle"],
                         level=self.bioState["level"]+1,
                         levelBranch=self.bioState["levelBranch"]+1,
                         # color = self.bioState["color"],
                         type_ = self.bioState["type"],
-                        size=self.bioState["size"]*self.dna["types"][self.bioState["type"]]["sizeMultiplier"],
+                        size=self.bioState["size"]*self.dna.types[self.bioState["type"]]["sizeMultiplier"],
                     )])
             else:
                 self.children.extend([Cell(
@@ -156,7 +142,7 @@ class Cell:
                         # color = ,
                         type_=slot["type"],
                         size=self.bioState["size"] * slot["sizeMultiplier"],
-                    ) for slot in self.dna["types"][self.bioState["type"]]["slots"]])
+                    ) for slot in self.dna.types[self.bioState["type"]]["slots"]])
 
 
     def render(self, canvas):
@@ -172,7 +158,7 @@ class Cell:
                 beginPoint[0], beginPoint[1], 
                 endPoint[0], endPoint[1], 
                 # ), fill=self.bioState["color"], 
-                fill=self.dna["types"][self.bioState["type"]]["color"],                        
+                fill=self.dna.types[self.bioState["type"]]["color"],                        
                 width=int(0.5*math.log(self.bioState["size"]))
                 )
         [c.render(canvas) for c in self.children]
@@ -190,7 +176,7 @@ class Scene:
 
     def __init__(self):
         self.cells.extend(
-                    [Cell(size=40, position=[SCREEN_WIDTH/2, SCREEN_HEIGHT/2])]
+                    [Cell(size=40, dna=DNA(), position=[SCREEN_WIDTH/2, SCREEN_HEIGHT/2])]
                 )
         # self.cells.extend(
                     # [Cell(size=40, angle=angle,  position=[SCREEN_WIDTH/2, SCREEN_HEIGHT/2])
