@@ -1,19 +1,5 @@
-"""
-This simple animation example shows how to bounce a rectangle
-on the screen.
-
-It assumes a programmer knows how to create functions already.
-
-It does not assume a programmer knows how to create classes. If you do know
-how to create classes, see the starting template for a better example:
-
-http://pythonhosted.org/arcade/examples/starting_template.html
-
-Or look through the examples showing how to use Sprites.
-
-A video walk-through of this example is available at:
-https://vimeo.com/168063840
-"""
+# nmap <D-5> diw"_s["pa"]
+# imap <D-5> <ESC>diw"_s["pa"]a
 
 # import arcade
 import math
@@ -21,38 +7,78 @@ import pprint
 import random
 from PIL import Image, ImageDraw
 
+SCREEN_WIDTH = 6000
+SCREEN_HEIGHT = 6000
+
 class Cell:
     parent = None
 
-    def __init__(self, position=[300,300], mass=1, parent=None, level=0, angle=0, childAngle=20):
+    def __init__(self, position=[300,300], mass=1, parent=None, level=0, levelBranch=0, angle=0, childAngle=20, size=50, type_=0, color='red'):
         self.children = []
         self.timeCounter = {
-                'after_birth':0,
+                'after_birth': 0,
                 'after_child': 0,
                 }
         self.bioState = {
                 'isRoot': False, # ∞ mass
                 'hasChildren': False,
-                'size': 0,  # for both stems and berries
-                'width': 0, # for both stems and berries
-                'type': 'stem',
-                'color': '#FFFFFF',
+                'size': size,  # for both stems and berries
+                # 'width': 0, # for both stems and berries
+                'type': type_,
+                'color': color,
                 'level': level,
+                'levelBranch': levelBranch,
                 'angle': angle,
-                'deltaAngle': 0,
+                # 'deltaAngle': 0,
                 # 'angleVariance': 90,
             }
         self.dna = {
-                "space_required_for_reproduction": 20,
-                "time_before_reproduction": 50,
-                "time_before_branching": 500,
-                "chargeMultiplier": 10,
-                "sizeMultiplier": 30,
+                "types": [ # indexes refer to self.bioState["type"]
+                    { #0
+                        "angle": 60, # -180<=angle<=180
+                        "sizeMultiplier": 0.95,
+                        "branchSegments": 10,
+                        "color": 'red',
+                        "slots": [
+                            # {
+                                # "type": 0,
+                                # "angle": 10,
+                                # "sizeMultiplier": 0.5,
+                                # },
+                            # {
+                                # "type": 1,
+                                # "angle": -45,
+                                # "sizeMultiplier": 0.5,
+                                # },
+                            ],
+                        },
+                    { #1
+                        "angle": 60, # -180<=angle<=180
+                        "sizeMultiplier": 1,
+                        "branchSegments": 5,
+                        "color": 'green',
+                        "slots": [
+                            # {
+                                # "type": 0,
+                                # "angle": 45,
+                                # "sizeMultiplier": 0.5,
+                                # },
+                            # {
+                                # "type": 1,
+                                # "angle": -45,
+                                # "sizeMultiplier": 0.5,
+                                # },
+                            ],
+                        },
+                    ],
                 "childAngle": childAngle,
-                } #TODO
+                # "chargeMultiplier": 10,
+                # "sizeMultiplier": 30,
+                # "space_required_for_reproduction": 20,
+                # "time_before_reproduction": 50,
+                # "time_before_branching": 500,
+                }
         self.physics = {
-                "mass": mass,
-                "charge": 0,
                 "position": position,
                 }
         self.parent = parent
@@ -70,70 +96,76 @@ class Cell:
         pass
 
     def develop(self):
-        # if not self.parent:
-
-        # import pdb;pdb.set_trace() 
-        # if self.children:
-            # for c in self.children:
-                # c.develop()
         # move
         if self.parent:
             vector = [self.bioState["size"] * f(math.radians(self.bioState["angle"])) for f in [math.sin, math.cos] ]
             self.physics["position"] = [b+v for b, v in zip(self.parent.physics["position"], vector)]
-        #bio
-        self.bioState["size"] = self.dna["sizeMultiplier"] * \
-            math.log10(self.timeCounter["after_birth"]/5 + 1)
-        self.physics["charge"] = self.dna["chargeMultiplier"] * \
-            math.log10(self.timeCounter["after_birth"] + 1)
-        # self.bioState["deltaAngle"] = self.bioState["angleVariance"] * \
-            # math.log10(self.timeCounter["after_birth"] + 1)
         #reproduce
         self.reproduce()
         # timing
-        self.timeCounter["after_birth"] += 1
+        # self.timeCounter["after_birth"] += 1
         # recursive developing children
         [c.develop() for c in self.children]
 
     def reproduceNumber(self):
-        if self.bioState["level"] == 0:
-            if self.timeCounter["after_birth"] == 0:
-                return 5
-        elif \
-                self.bioState["level"] == 3 or \
-                self.bioState["level"] == 9 or \
-                self.bioState["level"] == 27 or \
-                self.bioState["level"] == 81:
-                # self.bioState["level"] == 32 or \
-                # self.bioState["level"] == 64:
-            if self.timeCounter["after_birth"] == self.dna["time_before_reproduction"]:
-                return 3
-        else:
-            if self.timeCounter["after_birth"] == self.dna["time_before_reproduction"]:
-                return 1
-        return 0
+        # if self.bioState["level"] == 0:
+            # if self.timeCounter["after_birth"] == 0:
+                # return 5
+        # elif \
+                # self.bioState["level"] == 3 or \
+                # self.bioState["level"] == 9 or \
+                # self.bioState["level"] == 27 or \
+                # self.bioState["level"] == 81:
+                # # self.bioState["level"] == 32 or \
+                # # self.bioState["level"] == 64:
+            # if self.timeCounter["after_birth"] == self.dna["time_before_reproduction"]:
+                # return 3
+        # else:
+            # if self.timeCounter["after_birth"] == self.dna["time_before_reproduction"]:
+                # return 1
+        return 1# if self.bioState["levelBranch"] < 100 else 0
 
     def reproduce(self):
-        if self.bioState["level"] <= 4:
-            childNumber = self.reproduceNumber()
-            self.children.extend([Cell(
-                parent=self,
-                angle=random.randrange(0,100000),
-                level=self.bioState["level"]+1,
-                ) for i in range(childNumber)])
+        if self.bioState["level"] <= 70:
+            if self.bioState["levelBranch"] <= self.dna["types"][self.bioState["type"]]["branchSegments"]:
+                self.children.extend([Cell(
+                        parent=self,
+                        angle=self.bioState["angle"] + self.dna["types"][self.bioState["type"]]["angle"],
+                        level=self.bioState["level"]+1,
+                        levelBranch=self.bioState["levelBranch"]+1,
+                        # color = self.bioState["color"],
+                        type_ = self.bioState["type"],
+                        size=self.bioState["size"]*self.dna["types"][self.bioState["type"]]["sizeMultiplier"],
+                    )])
+            else:
+                self.children.extend([Cell(
+                        parent=self,
+                        angle=self.bioState["angle"] + slot["angle"],
+                        level=self.bioState["level"] + 1,
+                        levelBranch=0,
+                        # color = ,
+                        type_=slot["type"],
+                        size=self.bioState["size"] * slot["sizeMultiplier"],
+                    ) for slot in self.dna["types"][self.bioState["type"]]["slots"]])
 
-    def render(self):
+
+    def render(self, draw):
         if self.parent:
             beginPoint = self.parent.physics["position"]
             endPoint = self.physics["position"]
-            print(self)
-            print(beginPoint)
-            print(endPoint)
-            arcade.draw_line(beginPoint[0], beginPoint[1], 
-                    endPoint[0], endPoint[1], 
-                    arcade.color.RED, 
-                    # 1)
-                    1+int(self.bioState["size"]*4/self.dna["sizeMultiplier"]))
-        [c.render() for c in self.children]
+            # draw.ellipse((
+                # beginPoint[0]-1, beginPoint[1]-1, 
+                # beginPoint[0]+1, beginPoint[1]+1, 
+                # ), 
+                # fill = 'red')
+            draw.line((
+                beginPoint[0], beginPoint[1], 
+                endPoint[0], endPoint[1], 
+                # ), fill=self.bioState["color"], 
+                ), fill=self.dna["types"][self.bioState["type"]]["color"],                        
+                width=int(3*math.log(self.bioState["size"]))
+                )
+        [c.render(draw) for c in self.children]
 
     # def getPosition(self):
         # return self.physics["position"]
@@ -147,12 +179,15 @@ class Scene:
     # Потом доделать Параметры вьюпорта (проекция координат мира на экран)
 
     def __init__(self):
-        self.cells.append(Cell())
+        self.cells.extend(
+                    [Cell(size=400, angle=angle,  position=[SCREEN_WIDTH/2, SCREEN_HEIGHT/2])
+                    for angle in range(0,360,30)]
+                )
         # self.cells[0].children.append(Cell(mass=1, level=1, parent=self.cells[0], angle=45))
         # self.cells[0].children[0].children.append(Cell(mass=1, level=1, parent=self.cells[0].children[0], angle=-45))
 
-    def render(self):
-        [c.render() for c in self.cells]
+    def render(self, draw):
+        [c.render(draw) for c in self.cells]
 
     def develop(self):
         # for i, cell in enumerate(self.cells):
@@ -165,9 +200,6 @@ class Scene:
 
 scene = Scene()
 
-# Size of the screen
-SCREEN_WIDTH = 600
-SCREEN_HEIGHT = 600
 
 
 # def on_draw(delta_time):
@@ -177,9 +209,10 @@ SCREEN_HEIGHT = 600
     # arcade.draw_line(10,10,200,200,            arcade.color.RED,             1)
 
 def main():
+    scene.develop()
     im = Image.new('RGB', (SCREEN_WIDTH, SCREEN_HEIGHT), (256, 256, 256)) 
     draw = ImageDraw.Draw(im) 
-    draw.line((100,200, 150, 320), fill=0, width=3)
+    scene.render(draw)
     im.show()
 
     # Open up our window
